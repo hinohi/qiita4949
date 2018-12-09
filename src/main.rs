@@ -10,6 +10,9 @@ fn is_prime(n: Integer) -> bool {
         if n % i == 0 {
             return false;
         }
+        if i * i > n {
+            return true;
+        }
     }
     true
 }
@@ -57,6 +60,7 @@ fn test_prime() {
     assert_eq!(is_prime(0), false);
     assert_eq!(is_prime(1), false);
     assert_eq!(is_prime(2), true);
+    assert_eq!(is_prime(9), false);
     assert_eq!(is_prime(57), false);
     assert_eq!(is_prime(97), true);
 }
