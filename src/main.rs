@@ -2,19 +2,50 @@ use std::io::stdin;
 
 type Integer = i32;
 
-fn is_prime(n: Integer) -> bool {
-    if n <= 1 {
-        return false;
+struct PrimeSeries {
+    primes: Vec<Integer>,
+}
+
+impl PrimeSeries {
+    fn new() -> PrimeSeries {
+        PrimeSeries {
+            primes: vec![2, 3, 5],
+        }
     }
-    for i in 2..n {
-        if n % i == 0 {
+
+    fn expand(&mut self, max2: Integer) {
+        for i in (self.primes.last().unwrap() + 2..max2).step_by(2) {
+            if i * i > max2 {
+                break;
+            }
+            if self.is_prime(i) {
+                self.primes.push(i);
+            }
+        }
+    }
+
+    /// 現在の自前の素数列だけから素数判定を行う
+    /// 適切に ``expand`` しておかないとバグる
+    /// 特にこだわりがないなら ``determine_prime`` を使うべき
+    fn is_prime(&self, n: Integer) -> bool {
+        if n <= 1 {
             return false;
         }
-        if i * i > n {
-            return true;
+        for p in &self.primes {
+            if p * p > n {
+                return true;
+            }
+            if n % p == 0 {
+                return false;
+            }
         }
+        true
     }
-    true
+
+    fn determine_prime(&mut self, n: Integer) -> bool {
+        self.expand(n);
+        self.is_prime(n)
+    }
 }
 
 fn is_4949(mut n: Integer) -> bool {
@@ -31,9 +62,10 @@ fn is_4949(mut n: Integer) -> bool {
 
 fn solve_4949(n: usize) -> Vec<Integer> {
     let mut ans = Vec::new();
+    let mut ps = PrimeSeries::new();
     let mut i = 1;
     while ans.len() < n {
-        if is_prime(i) && is_4949(i) {
+        if ps.determine_prime(i) && is_4949(i) {
             ans.push(i);
         }
         i += 1;
@@ -57,12 +89,14 @@ fn main() {
 
 #[test]
 fn test_prime() {
-    assert_eq!(is_prime(0), false);
-    assert_eq!(is_prime(1), false);
-    assert_eq!(is_prime(2), true);
-    assert_eq!(is_prime(9), false);
-    assert_eq!(is_prime(57), false);
-    assert_eq!(is_prime(97), true);
+    let mut ps = PrimeSeries::new();
+    assert_eq!(ps.determine_prime(0), false);
+    assert_eq!(ps.determine_prime(1), false);
+    assert_eq!(ps.determine_prime(2), true);
+    assert_eq!(ps.determine_prime(9), false);
+    assert_eq!(ps.determine_prime(57), false);
+    assert_eq!(ps.determine_prime(97), true);
+    assert_eq!(ps.determine_prime(9999991), true);
 }
 
 #[test]
