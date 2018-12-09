@@ -2,50 +2,27 @@ use std::io::stdin;
 
 type Integer = i32;
 
-struct PrimeSeries {
-    primes: Vec<Integer>,
-}
+// FNVハッシュはキーのビット数が小さい時はSipHashよりも高速。
+use fnv::FnvHashMap;
 
-impl PrimeSeries {
-    fn new() -> PrimeSeries {
-        PrimeSeries {
-            primes: vec![2, 3, 5],
-        }
-    }
+fn primes() -> Box<Iterator<Item = Integer>> {
+    let mut multiples = FnvHashMap::with_hasher(Default::default());;
+    let iter = (3..).step_by(2).filter_map(move |i| {
+        let (prime_or_none, factor) = match multiples.remove(&i) {
+            Some(f) => (None, f),
+            None => (Some(i), i * 2),
+        };
 
-    fn expand(&mut self, max2: Integer) {
-        for i in (self.primes.last().unwrap() + 2..max2).step_by(2) {
-            if i * i > max2 {
-                break;
-            }
-            if self.is_prime(i) {
-                self.primes.push(i);
-            }
-        }
-    }
+        (1..)
+            .map(|j| i + j * factor)
+            .skip_while(|m| multiples.contains_key(m))
+            .next()
+            .map(|m| multiples.insert(m, factor));
 
-    /// 現在の自前の素数列だけから素数判定を行う
-    /// 適切に ``expand`` しておかないとバグる
-    /// 特にこだわりがないなら ``determine_prime`` を使うべき
-    fn is_prime(&self, n: Integer) -> bool {
-        if n <= 1 {
-            return false;
-        }
-        for p in &self.primes {
-            if p * p > n {
-                return true;
-            }
-            if n % p == 0 {
-                return false;
-            }
-        }
-        true
-    }
-
-    fn determine_prime(&mut self, n: Integer) -> bool {
-        self.expand(n);
-        self.is_prime(n)
-    }
+        prime_or_none // filter_map()は次の素数が見つかるまでリトライする。
+    });
+    // 最初に2を返してから、他の素数を返す。
+    Box::new((2..).take(1).chain(iter))
 }
 
 fn is_4949(mut n: Integer) -> bool {
@@ -62,13 +39,13 @@ fn is_4949(mut n: Integer) -> bool {
 
 fn solve_4949(n: usize) -> Vec<Integer> {
     let mut ans = Vec::new();
-    let mut ps = PrimeSeries::new();
-    let mut i = 1;
-    while ans.len() < n {
-        if ps.determine_prime(i) && is_4949(i) {
-            ans.push(i);
+    for p in primes() {
+        if is_4949(p) {
+            ans.push(p);
+            if ans.len() >= n {
+                break;
+            }
         }
-        i += 1;
     }
     ans
 }
@@ -88,15 +65,11 @@ fn main() {
 }
 
 #[test]
-fn test_prime() {
-    let mut ps = PrimeSeries::new();
-    assert_eq!(ps.determine_prime(0), false);
-    assert_eq!(ps.determine_prime(1), false);
-    assert_eq!(ps.determine_prime(2), true);
-    assert_eq!(ps.determine_prime(9), false);
-    assert_eq!(ps.determine_prime(57), false);
-    assert_eq!(ps.determine_prime(97), true);
-    assert_eq!(ps.determine_prime(9999991), true);
+fn test_primes() {
+    let ans = vec![2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
+    for (p1, p2) in primes().zip(ans) {
+        assert_eq!(p1, p2);
+    }
 }
 
 #[test]
