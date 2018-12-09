@@ -1,6 +1,8 @@
 use std::io::stdin;
 
-fn is_prime(n: u128) -> bool {
+type Integer = i32;
+
+fn is_prime(n: Integer) -> bool {
     if n <= 1 {
         return false;
     }
@@ -12,7 +14,7 @@ fn is_prime(n: u128) -> bool {
     true
 }
 
-fn is_4949(mut n: u128) -> bool {
+fn is_4949(mut n: Integer) -> bool {
     loop {
         if n == 0 {
             return false;
@@ -24,7 +26,7 @@ fn is_4949(mut n: u128) -> bool {
     }
 }
 
-fn solve_4949(n: usize) -> Vec<u128> {
+fn solve_4949(n: usize) -> Vec<Integer> {
     let mut ans = Vec::new();
     let mut i = 1;
     while ans.len() < n {
